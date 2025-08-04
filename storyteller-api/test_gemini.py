@@ -1,44 +1,53 @@
 import os
 import requests
-import json
-from google.cloud import storage
 from dotenv import load_dotenv
 
-load_dotenv() # Load variables from .env file
+load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
-GCS_BUCKET_NAME = "storyteller-audio-bucket" # Replace with your actual bucket name
 
 def generate_story_text(prompt: str) -> str:
     headers = {"Content-Type": "application/json"}
     params = {"key": GEMINI_API_KEY}
     
     # 1. Call Gemini 2.5 Pro to generate a story outline from the prompt.
-    outline_prompt = f"""
-    Create a 5-point story outline for a 30-minute sleep story about: {prompt}.
-    The story should be appropriate for a child aged 8-12.
-
-    **IMPORTANT:** Format the output as a JSON object with a single key "outline" which is an array of strings.
-    Example: {{"outline": ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"]}}
-    """
+    outline_prompt = f"Create a 5-point story outline for a 30-minute sleep story about: {prompt}"
     
     json_data = {
         "contents": [{"parts": [{"text": outline_prompt}]}],
         "generationConfig": {
             "response_mime_type": "application/json",
+            "response_schema": {
+                "type": "OBJECT",
+                "properties": {
+                    "outline": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "STRING"
+                        }
+                    }
+                }
+            }
         }
     }
 
     try:
+        print("--- Generating Outline ---")
         response = requests.post(GEMINI_API_URL, params=params, headers=headers, json=json_data)
+        print("Full API Response:")
+        print(response.json())
         response.raise_for_status()
-        # The response from the API is a JSON string within the 'text' field.
         outline_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        # The response is a JSON string, so we need to parse it
+        import json
         outline_data = json.loads(outline_text)
         story_points = outline_data.get("outline", [])
         outline = "\n".join(story_points)
-    except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError) as e:
+        print("Outline Received:")
+        print(outline)
+        print("--------------------------\n")
+    except requests.exceptions.RequestException as e:
         raise RuntimeError(f"Failed to call Gemini API for outline: {e}")
 
     # 2. Loop through each outline point, generating that section of the story.
@@ -59,15 +68,19 @@ def generate_story_text(prompt: str) -> str:
                 "generationConfig": {"temperature": 0.5, "maxOutputTokens": 512}
             }
             try:
+                print(f"--- Generating Summary for Section {i+1} ---")
                 summary_response = requests.post(GEMINI_API_URL, params=params, headers=headers, json=summary_json_data)
                 summary_response.raise_for_status()
                 summary_of_previous_sections = summary_response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                print("Summary Received.")
+                print("-------------------------------------\n")
             except requests.exceptions.RequestException as e:
                 print(f"Could not generate summary: {e}")
                 summary_of_previous_sections = "No summary available."
 
+
         section_prompt = f"""
-        You are writing a section of a 30-minute sleep story for a child aged 8-12.
+        You are writing a section of a 30-minute sleep story.
 
         **Original User Request:** {prompt}
 
@@ -89,29 +102,20 @@ def generate_story_text(prompt: str) -> str:
         }
         
         try:
+            print(f"--- Generating Section {i+1}: {point} ---")
             response = requests.post(GEMINI_API_URL, params=params, headers=headers, json=json_data)
             response.raise_for_status()
             section_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+            print(f"Section {i+1} Received.")
             full_story += section_text + "\n\n"
+            print("----------------------------------\n")
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Failed to call Gemini API for section '{point}': {e}")
             
     return full_story
 
-def convert_text_to_audio(text: str) -> str:
-    # This function would use Google's TTS library.
-    # For the MVP, we will assume this step is complex and return a placeholder.
-    # A full implementation requires saving the audio and uploading it.
-    # The upload_to_gcs function below shows how that would work.
-    return "https://storage.googleapis.com/storyteller-audio-bucket/placeholder.mp3"
-
-def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
-    """Uploads a file to the GCS bucket and makes it public."""
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(GCS_BUCKET_NAME)
-    blob = bucket.blob(destination_blob_name)
-
-    blob.upload_from_filename(file_path)
-    blob.make_public()
-
-    return blob.public_url
+if __name__ == "__main__":
+    story = generate_story_text("A story about a friendly dragon")
+    print("\n--- Final Story ---")
+    print(story)
+    print("-------------------")
