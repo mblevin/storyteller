@@ -109,20 +109,24 @@ def generate_story_text(prompt: str) -> str:
 def convert_text_to_audio(text: str) -> str:
     """Converts text to an audio file using Google TTS and returns a public URL."""
     print("--- Starting Text-to-Speech Conversion ---")
-    from google.cloud import texttospeech
+    try:
+        from google.cloud import texttospeech
 
-    client = texttospeech.TextToSpeechClient()
-    synthesis_input = texttospeech.SynthesisInput(text=text)
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", name="en-US-Wavenet-F"
-    )
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3
-    )
+        client = texttospeech.TextToSpeechClient()
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US", name="en-US-Wavenet-F"
+        )
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
 
-    response = client.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
-    )
+        response = client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+    except Exception as e:
+        print(f"!!! An error occurred during Text-to-Speech conversion: {e}")
+        raise RuntimeError(f"TTS Error: {e}")
 
     # Save the audio content to a temporary file
     temp_file_path = "/tmp/output.mp3"
