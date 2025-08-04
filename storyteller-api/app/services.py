@@ -8,7 +8,7 @@ load_dotenv() # Load variables from .env file
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
-GCS_BUCKET_NAME = "storyteller-audio-bucket" # Replace with your actual bucket name
+GCS_BUCKET_NAME = "storyteller-audio-bucket-mblevin"
 
 def generate_story_text(prompt: str) -> str:
     headers = {"Content-Type": "application/json"}
@@ -99,11 +99,34 @@ def generate_story_text(prompt: str) -> str:
     return full_story
 
 def convert_text_to_audio(text: str) -> str:
-    # This function would use Google's TTS library.
-    # For the MVP, we will assume this step is complex and return a placeholder.
-    # A full implementation requires saving the audio and uploading it.
-    # The upload_to_gcs function below shows how that would work.
-    return "https://storage.googleapis.com/storyteller-audio-bucket/placeholder.mp3"
+    """Converts text to an audio file using Google TTS and returns a public URL."""
+    from google.cloud import texttospeech
+
+    client = texttospeech.TextToSpeechClient()
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US", name="en-US-Wavenet-F"
+    )
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+
+    response = client.synthesize_speech(
+        input=synthesis_input, voice=voice, audio_config=audio_config
+    )
+
+    # Save the audio content to a temporary file
+    temp_file_path = "/tmp/output.mp3"
+    with open(temp_file_path, "wb") as out:
+        out.write(response.audio_content)
+
+    # Upload the file to GCS and get the public URL
+    # The destination blob name can be generated to be unique, e.g., using a UUID
+    import uuid
+    destination_blob_name = f"story-{uuid.uuid4()}.mp3"
+    public_url = upload_to_gcs(temp_file_path, destination_blob_name)
+    
+    return public_url
 
 def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
     """Uploads a file to the GCS bucket and makes it public."""

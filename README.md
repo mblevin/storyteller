@@ -21,7 +21,7 @@ This document outlines the steps to build the Minimum Viable Product (MVP) for t
 - **Backend:** Python, FastAPI (for web server)
 - **Speech-to-Text (STT):** OpenAI Whisper (running on-device via `whisper.cpp`)
 - **Language Model (LLM):** Google Gemini 2.5 Pro API
-- **Text-to-Speech (TTS):** Google Cloud Text-to-Speech API
+- **Text-to-Speech (TTS):** Google Cloud Text-to-Speech API (Voice: `en-US-Wavenet-F`)
 - **Database:** SQLite (for MVP storage)
 - **Hosting:** Render (free tier)
 
