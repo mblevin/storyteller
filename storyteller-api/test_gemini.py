@@ -98,7 +98,11 @@ def generate_story_text(prompt: str) -> str:
         
         json_data = {
             "contents": [{"parts": [{"text": section_prompt}]}],
-            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
+            "generationConfig": {
+                "temperature": 0.7,
+                "maxOutputTokens": 8192,
+                "response_mime_type": "application/json"
+            }
         }
         
         try:

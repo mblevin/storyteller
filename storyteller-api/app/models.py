@@ -5,6 +5,7 @@ class StoryRequest(BaseModel):
 
 class StoryResponse(BaseModel):
     story_text: str
+    audio_url: str
 
 class Story(BaseModel):
     id: int
@@ -13,4 +14,4 @@ class Story(BaseModel):
     audio_url: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True

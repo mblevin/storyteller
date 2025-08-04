@@ -41,11 +41,14 @@ def generate_story_text(prompt: str) -> str:
     except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError) as e:
         raise RuntimeError(f"Failed to call Gemini API for outline: {e}")
 
+    print(f"Successfully generated story outline with {len(story_points)} points.")
+
     # 2. Loop through each outline point, generating that section of the story.
     full_story = ""
     summary_of_previous_sections = "The story has not yet begun."
     
     for i, point in enumerate(story_points):
+        print(f"--- Generating section {i+1}/{len(story_points)}: '{point}' ---")
         # Generate an interim summary if we have some story text
         if full_story:
             summarization_prompt = f"""
@@ -85,7 +88,11 @@ def generate_story_text(prompt: str) -> str:
         
         json_data = {
             "contents": [{"parts": [{"text": section_prompt}]}],
-            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
+            "generationConfig": {
+                "temperature": 0.7,
+                "maxOutputTokens": 8192,
+                "response_mime_type": "application/json"
+            }
         }
         
         try:
@@ -93,6 +100,7 @@ def generate_story_text(prompt: str) -> str:
             response.raise_for_status()
             section_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
             full_story += section_text + "\n\n"
+            print(f"Successfully generated section {i+1}.")
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Failed to call Gemini API for section '{point}': {e}")
             
@@ -100,6 +108,7 @@ def generate_story_text(prompt: str) -> str:
 
 def convert_text_to_audio(text: str) -> str:
     """Converts text to an audio file using Google TTS and returns a public URL."""
+    print("--- Starting Text-to-Speech Conversion ---")
     from google.cloud import texttospeech
 
     client = texttospeech.TextToSpeechClient()
@@ -124,8 +133,10 @@ def convert_text_to_audio(text: str) -> str:
     # The destination blob name can be generated to be unique, e.g., using a UUID
     import uuid
     destination_blob_name = f"story-{uuid.uuid4()}.mp3"
+    print(f"Uploading audio file to GCS as '{destination_blob_name}'...")
     public_url = upload_to_gcs(temp_file_path, destination_blob_name)
     
+    print(f"Successfully generated audio. Public URL: {public_url}")
     return public_url
 
 def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
