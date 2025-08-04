@@ -1,5 +1,9 @@
 import requests
 import json
+import time
+
+# Give the server time to start up
+time.sleep(10)
 
 # URL of the running FastAPI application
 API_URL = "https://storyteller-api-xvdd.onrender.com/stories"
