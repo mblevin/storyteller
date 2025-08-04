@@ -4,6 +4,7 @@
 
 - [x] **Phase 1: Backend Setup**
 - [x] **Phase 2: AI & Database Integration**
+- [ ] **Phase 2.5: Story Generation Validation**
 - [ ] **Phase 3: Frontend Setup**
 - [ ] **Phase 4: Frontend-Backend Integration**
 - [x] **Phase 5: Deployment**
@@ -178,7 +179,19 @@ def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
 
 ---
 
-## 6. Phase 3: Frontend Setup (Swift/SwiftUI)
+## 6. Phase 2.5: Story Generation Validation
+
+### 6.1. Objective
+Ensure the iterative, summary-driven story generation process produces a coherent, high-quality story that is appropriate for the target age group (8-12).
+
+### 6.2. Steps
+1.  **Execute Test Script:** Run the `test_gemini.py` script locally to generate a full story.
+2.  **Review Output:** Read the final story output in the console.
+3.  **Validate:** Confirm that the story is well-written, follows the outline, maintains narrative cohesion, and is suitable for children aged 8-12.
+
+---
+
+## 7. Phase 3: Frontend Setup (Swift/SwiftUI)
 
 ### 5.1. Whisper Integration (`whisper.cpp`)
 
@@ -207,7 +220,7 @@ For local development, add the following to your `Info.plist` to allow HTTP conn
 
 ---
 
-## 7. Phase 4: Frontend-Backend Integration
+## 8. Phase 4: Frontend-Backend Integration
 
 ### 6.1. Networking Layer
 
@@ -230,7 +243,7 @@ class NetworkingService {
 
 ---
 
-## 8. Phase 5: Deployment (Render)
+## 9. Phase 5: Deployment (Render)
 
 ### 7.1. Backend Deployment
 
