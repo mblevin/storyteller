@@ -3,7 +3,7 @@
 ## 1. Project Status
 
 - [x] **Phase 1: Backend Setup**
-- [x] **Phase 2: AI & Database Integration**
+- [x] **Phase 2: AI & Database Integration** (TTS Implemented)
 - [x] **Phase 2.5: Story Generation Validation**
 - [ ] **Phase 3: Frontend Setup**
 - [ ] **Phase 4: Frontend-Backend Integration**
