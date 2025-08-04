@@ -6,7 +6,7 @@
 - [ ] **Phase 2: AI & Database Integration**
 - [ ] **Phase 3: Frontend Setup**
 - [ ] **Phase 4: Frontend-Backend Integration**
-- [ ] **Phase 5: Deployment**
+- [x] **Phase 5: Deployment**
 
 ---
 
@@ -240,7 +240,7 @@ class NetworkingService {
     *   Click "New" -> "Web Service".
     *   Connect your GitHub account and select the `storyteller` repository.
     *   **Name:** `storyteller-api`
-    *   **Root Directory:** `storyteller-api`
+    *   **Root Directory:** `storyteller-api` (This is important, as it tells Render where to find the `requirements.txt` file)
     *   **Runtime:** `Python 3`
     *   **Build Command:** `pip install -r requirements.txt`
     *   **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
