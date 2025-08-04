@@ -33,7 +33,7 @@ def create_story(request: models.StoryRequest, db: Session = Depends(get_db)):
             audio_url=audio_url
         )
         
-        return models.StoryResponse(audio_url=audio_url)
+        return models.StoryResponse(story_text=story_text)
     except Exception as e:
         # Basic error handling
         raise HTTPException(status_code=500, detail=str(e))

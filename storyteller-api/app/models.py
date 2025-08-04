@@ -4,7 +4,7 @@ class StoryRequest(BaseModel):
     prompt: str
 
 class StoryResponse(BaseModel):
-    audio_url: str
+    story_text: str
 
 class Story(BaseModel):
     id: int
