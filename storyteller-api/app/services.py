@@ -113,7 +113,9 @@ def generate_story_text(prompt: str) -> str:
             if "candidates" in response_data and response_data["candidates"]:
                 content = response_data["candidates"][0].get("content", {})
                 if "parts" in content and content["parts"]:
-                    section_text = content["parts"][0].get("text", "")
+                    section_json_text = content["parts"][0].get("text", "")
+                    section_data = json.loads(section_json_text)
+                    section_text = section_data.get("story_section", "")
                     full_story += section_text + "\n\n"
                     print(f"Successfully generated section {i+1}.")
                 else:
