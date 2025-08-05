@@ -110,8 +110,16 @@ def convert_text_to_audio(text: str) -> str:
     print("--- Starting Text-to-Speech Conversion ---")
     try:
         from google.cloud import texttospeech
+        from google.oauth2 import service_account
 
-        client = texttospeech.TextToSpeechClient()
+        gcp_credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if not gcp_credentials_json:
+            raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
+
+        gcp_credentials = json.loads(gcp_credentials_json)
+        credentials = service_account.Credentials.from_service_account_info(gcp_credentials)
+        client = texttospeech.TextToSpeechClient(credentials=credentials)
+
         synthesis_input = texttospeech.SynthesisInput(text=text)
         voice = texttospeech.VoiceSelectionParams(
             language_code="en-US", name="en-US-Wavenet-F"
