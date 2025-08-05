@@ -7,3 +7,4 @@ python-dotenv
 google-cloud-storage
 google-auth
 google-cloud-texttospeech
+google-generativeai
