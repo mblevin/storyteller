@@ -33,6 +33,7 @@ def generate_story_text(prompt: str) -> str:
         
         # Safely access the generated text
         response_data = response.json()
+        print(f"Gemini API response for outline: {json.dumps(response_data, indent=2)}")
         if "candidates" in response_data and response_data["candidates"]:
             content = response_data["candidates"][0].get("content", {})
             if "parts" in content and content["parts"]:
@@ -108,6 +109,7 @@ def generate_story_text(prompt: str) -> str:
             
             # Safely access the generated text
             response_data = response.json()
+            print(f"Gemini API response for section {i+1}: {json.dumps(response_data, indent=2)}")
             if "candidates" in response_data and response_data["candidates"]:
                 content = response_data["candidates"][0].get("content", {})
                 if "parts" in content and content["parts"]:
