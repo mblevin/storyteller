@@ -2,9 +2,6 @@ import os
 import requests
 import json
 from google.cloud import storage
-from dotenv import load_dotenv
-
-load_dotenv() # Load variables from .env file
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
