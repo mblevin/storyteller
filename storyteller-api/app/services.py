@@ -130,12 +130,13 @@ def convert_text_to_audio(text: str) -> str:
         )
 
         # Split the text into chunks of 4500 bytes
-        text_chunks = [text[i:i + 4500] for i in range(0, len(text), 4500)]
+        text_bytes = text.encode('utf-8')
+        byte_chunks = [text_bytes[i:i + 4500] for i in range(0, len(text_bytes), 4500)]
         audio_segments = []
 
-        for i, chunk in enumerate(text_chunks):
-            print(f"--- Synthesizing chunk {i+1}/{len(text_chunks)} ---")
-            synthesis_input = texttospeech.SynthesisInput(text=chunk)
+        for i, chunk in enumerate(byte_chunks):
+            print(f"--- Synthesizing chunk {i+1}/{len(byte_chunks)} ---")
+            synthesis_input = texttospeech.SynthesisInput(text=chunk.decode('utf-8'))
             response = client.synthesize_speech(
                 input=synthesis_input, voice=voice, audio_config=audio_config
             )
