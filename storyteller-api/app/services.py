@@ -33,11 +33,21 @@ def generate_story_text(prompt: str) -> str:
     try:
         response = requests.post(GEMINI_API_URL, params=params, headers=headers, json=json_data)
         response.raise_for_status()
-        # The response from the API is a JSON string within the 'text' field.
-        outline_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        outline_data = json.loads(outline_text)
-        story_points = outline_data.get("outline", [])
-        outline = "\n".join(story_points)
+        
+        # Safely access the generated text
+        response_data = response.json()
+        if "candidates" in response_data and response_data["candidates"]:
+            content = response_data["candidates"][0].get("content", {})
+            if "parts" in content and content["parts"]:
+                outline_text = content["parts"][0].get("text", "")
+                outline_data = json.loads(outline_text)
+                story_points = outline_data.get("outline", [])
+                outline = "\n".join(story_points)
+            else:
+                raise RuntimeError(f"Gemini API response for outline is missing 'parts' key. Response: {response_data}")
+        else:
+            raise RuntimeError(f"Gemini API response for outline is missing 'candidates' key. Response: {response_data}")
+
     except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError) as e:
         raise RuntimeError(f"Failed to call Gemini API for outline: {e}")
 
@@ -98,11 +108,25 @@ def generate_story_text(prompt: str) -> str:
         try:
             response = requests.post(GEMINI_API_URL, params=params, headers=headers, json=json_data)
             response.raise_for_status()
-            section_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-            full_story += section_text + "\n\n"
-            print(f"Successfully generated section {i+1}.")
+            
+            # Safely access the generated text
+            response_data = response.json()
+            if "candidates" in response_data and response_data["candidates"]:
+                content = response_data["candidates"][0].get("content", {})
+                if "parts" in content and content["parts"]:
+                    section_text = content["parts"][0].get("text", "")
+                    full_story += section_text + "\n\n"
+                    print(f"Successfully generated section {i+1}.")
+                else:
+                    print(f"Warning: 'parts' key missing in response for section {i+1}. Response: {response_data}")
+            else:
+                print(f"Warning: 'candidates' key missing or empty in response for section {i+1}. Response: {response_data}")
+
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Failed to call Gemini API for section '{point}': {e}")
+        except json.JSONDecodeError:
+            print(f"Error decoding JSON for section {i+1}. Response text: {response.text}")
+
             
     return full_story
 
@@ -150,6 +174,5 @@ def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
     blob = bucket.blob(destination_blob_name)
 
     blob.upload_from_filename(file_path)
-    blob.make_public()
 
     return blob.public_url
