@@ -111,6 +111,8 @@ def convert_text_to_audio(text: str) -> str:
     try:
         from google.cloud import texttospeech
         from google.oauth2 import service_account
+        from pydub import AudioSegment
+        import io
 
         gcp_credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         if not gcp_credentials_json:
@@ -120,7 +122,6 @@ def convert_text_to_audio(text: str) -> str:
         credentials = service_account.Credentials.from_service_account_info(gcp_credentials)
         client = texttospeech.TextToSpeechClient(credentials=credentials)
 
-        synthesis_input = texttospeech.SynthesisInput(text=text)
         voice = texttospeech.VoiceSelectionParams(
             language_code="en-US", name="en-US-Wavenet-F"
         )
@@ -128,20 +129,30 @@ def convert_text_to_audio(text: str) -> str:
             audio_encoding=texttospeech.AudioEncoding.MP3
         )
 
-        response = client.synthesize_speech(
-            input=synthesis_input, voice=voice, audio_config=audio_config
-        )
+        # Split the text into chunks of 4500 bytes
+        text_chunks = [text[i:i + 4500] for i in range(0, len(text), 4500)]
+        audio_segments = []
+
+        for i, chunk in enumerate(text_chunks):
+            print(f"--- Synthesizing chunk {i+1}/{len(text_chunks)} ---")
+            synthesis_input = texttospeech.SynthesisInput(text=chunk)
+            response = client.synthesize_speech(
+                input=synthesis_input, voice=voice, audio_config=audio_config
+            )
+            audio_segments.append(AudioSegment.from_mp3(io.BytesIO(response.audio_content)))
+
+        print("--- Concatenating audio chunks ---")
+        combined_audio = sum(audio_segments)
+
+        # Save the combined audio to a temporary file
+        temp_file_path = "/tmp/output.mp3"
+        combined_audio.export(temp_file_path, format="mp3")
+
     except Exception as e:
         print(f"!!! An error occurred during Text-to-Speech conversion: {e}")
         raise RuntimeError(f"TTS Error: {e}")
 
-    # Save the audio content to a temporary file
-    temp_file_path = "/tmp/output.mp3"
-    with open(temp_file_path, "wb") as out:
-        out.write(response.audio_content)
-
     # Upload the file to GCS and get the public URL
-    # The destination blob name can be generated to be unique, e.g., using a UUID
     import uuid
     destination_blob_name = f"story-{uuid.uuid4()}.mp3"
     print(f"Uploading audio file to GCS as '{destination_blob_name}'...")
