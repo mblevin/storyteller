@@ -3,8 +3,8 @@ services:
     name: storyteller-api
     env: python
     plan: free
-    # The build command installs dependencies.
-    buildCommand: "apt list --installed && pip install -r storyteller-api/requirements.txt"
+    # The build command installs dependencies and FFmpeg.
+    buildCommand: "apt-get update && apt-get install -y portaudio19-dev ffmpeg && pip install -r storyteller-api/requirements.txt"
     # The start command changes to the correct directory before starting the server.
     startCommand: "cd storyteller-api && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
