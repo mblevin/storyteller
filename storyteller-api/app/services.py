@@ -16,7 +16,7 @@ def generate_story_text(prompt: str) -> str:
     # 1. Call Gemini 2.5 Pro to generate a story outline from the prompt.
     print("--- [LOG] Generating story outline. ---")
     outline_prompt = f"""
-    Create a 5-point story outline for a 30-minute sleep story about: {prompt}.
+    Create a 10-point story outline for a 30-minute sleep story about: {prompt}.
     The story should be appropriate for a child aged 8-12.
 
     **IMPORTANT:** Format the output as a JSON object with a single key "outline" which is an array of strings.
