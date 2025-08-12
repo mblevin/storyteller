@@ -7,7 +7,7 @@ def run_live_test():
     Sends a request to the live Render application and logs the process.
     """
     # URL of the running FastAPI application
-    API_URL = "https://storyteller-api.onrender.com/stories"
+    API_URL = "https://storyteller-api-xvdd.onrender.com/stories"
 
     # The prompt for the story
     prompt_data = {
