@@ -2,10 +2,8 @@
 # exit on error
 set -o errexit
 
-# Install ffmpeg
-apt-get update && apt-get install -y ffmpeg
-
 # Print the location of ffmpeg
+# This is for debugging purposes, to confirm that ffmpeg is in the path.
 which ffmpeg
 
 # Install Python dependencies

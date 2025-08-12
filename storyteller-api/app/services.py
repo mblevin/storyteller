@@ -126,6 +126,8 @@ def convert_text_to_audio(text: str) -> str:
         from pydub import AudioSegment
         import io
 
+        AudioSegment.converter = "/usr/bin/ffmpeg"
+
         gcp_credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         if not gcp_credentials_json:
             print("!!! [ERROR] GOOGLE_APPLICATION_CREDENTIALS environment variable not set. !!!")
