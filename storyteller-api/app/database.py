@@ -14,8 +14,9 @@ class StoryDB(Base):
     __tablename__ = "stories"
     id = Column(Integer, primary_key=True, index=True)
     prompt = Column(String)
-    story_text = Column(String)
-    audio_url = Column(String)
+    story_text = Column(String, nullable=True)
+    audio_url = Column(String, nullable=True)
+    status = Column(String, default="pending")
 
 def init_db():
     Base.metadata.create_all(bind=engine)
