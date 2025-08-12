@@ -43,6 +43,12 @@ def generate_story_text(prompt: str) -> str:
     The outline should follow a "gradual unwind" structure, starting in a calm and peaceful setting and becoming progressively more relaxing and dreamlike.
     The outline should include mindfulness elements, such as focusing on the breath and sensory details.
 
+    **Style Guidelines for the story for you to be aware of when creating your outline:**
+    *   **Lush, Descriptive Language:** The story will use rich, sensory language that appeals to all the senses (sight, sound, smell, touch, taste).
+    *   **Focus on the Present Moment:** The story will describe the character's experience as if it is happening right now.
+    *   **Avoid Conflict and Tension:** The story will be completely free of conflict, tension, or any startling events. The tone should be one of peace and tranquility.
+    *   **Gradual Unwind:** Each section will become progressively more relaxing and dreamlike.
+
     **IMPORTANT:** Format the output as a JSON object with a single key "outline" which is an array of strings.
     Example: {{"outline": ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5", "Point 6", "Point 7", "Point 8", "Point 9", "Point 10", "Point 11", "Point 12", "Point 13", "Point 14", "Point 15"]}}
     """
@@ -158,7 +164,7 @@ def convert_text_to_audio(text: str) -> str:
         raise RuntimeError("GCP_PROJECT_ID environment variable not set.")
 
     try:
-        from google.cloud import texttospeech_v1beta1 as texttospeech
+        from google.cloud import texttospeech_v1 as texttospeech
         from google.oauth2 import service_account
         import uuid
 
