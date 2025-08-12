@@ -2,8 +2,9 @@ import os
 import requests
 import json
 import random
+from sqlalchemy.orm import Session
 from google.cloud import storage
-from . import models
+from . import models, crud
 import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
