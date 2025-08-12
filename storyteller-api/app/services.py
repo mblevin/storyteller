@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import random
 from google.cloud import storage
 from . import models
 import google.generativeai as genai
@@ -137,8 +138,16 @@ def convert_text_to_audio(text: str) -> str:
         client = texttospeech.TextToSpeechClient(credentials=credentials)
         print("--- [LOG] TTS client created successfully. ---")
 
+        voices = [
+            "en-US-Chirp3-HD-Achernar",
+            "en-US-Chirp3-HD-Gacrux",
+            "en-US-Chirp3-HD-Leda",
+            "en-US-Chirp3-HD-Sulafat",
+        ]
+        random_voice = random.choice(voices)
+
         voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US", name="en-US-Chirp3-HD-Achernar"
+            language_code="en-US", name=random_voice
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3
