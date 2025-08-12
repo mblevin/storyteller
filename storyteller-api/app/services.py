@@ -130,11 +130,14 @@ def convert_text_to_audio(text: str) -> str:
     """Converts text to an audio file using Google TTS and returns a public URL."""
     print("--- [LOG] Starting Text-to-Speech conversion process. ---")
     try:
-        print("--- [LOG] Importing TTS libraries. ---")
+        print("--- [LOG] Importing base TTS libraries. ---")
         from google.cloud import texttospeech
         from google.oauth2 import service_account
-        from pydub import AudioSegment
         import io
+        
+        print("--- [LOG] Importing pydub... ---")
+        from pydub import AudioSegment
+        print("--- [LOG] Successfully imported pydub. ---")
 
         gcp_credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         if not gcp_credentials_path:
@@ -162,17 +165,30 @@ def convert_text_to_audio(text: str) -> str:
             speaking_rate=0.8
         )
 
-        # Split the text into chunks of 4500 bytes
-        print("--- [LOG] Splitting text into chunks for TTS. ---")
-        text_bytes = text.encode('utf-8')
-        byte_chunks = [text_bytes[i:i + 4500] for i in range(0, len(text_bytes), 4500)]
-        audio_segments = []
-        print(f"--- [LOG] Text split into {len(byte_chunks)} chunks. ---")
+        # Split the text into chunks by sentences, respecting the 5000-char limit
+        print("--- [LOG] Splitting text into sentence-aware chunks for TTS. ---")
+        import re
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        
+        chunks = []
+        current_chunk = ""
+        for sentence in sentences:
+            if len(current_chunk) + len(sentence) < 4500: # Keep well under the 5000 limit
+                current_chunk += sentence + " "
+            else:
+                chunks.append(current_chunk)
+                current_chunk = sentence + " "
+        chunks.append(current_chunk) # Add the last chunk
 
-        for i, chunk in enumerate(byte_chunks):
+        audio_segments = []
+        print(f"--- [LOG] Text split into {len(chunks)} chunks. ---")
+
+        for i, chunk in enumerate(chunks):
+            if not chunk.strip():
+                continue
             try:
-                print(f"--- [LOG] Synthesizing chunk {i+1}/{len(byte_chunks)}. ---")
-                synthesis_input = texttospeech.SynthesisInput(text=chunk.decode('utf-8'))
+                print(f"--- [LOG] Synthesizing chunk {i+1}/{len(chunks)}. ---")
+                synthesis_input = texttospeech.SynthesisInput(text=chunk)
                 response = client.synthesize_speech(
                     input=synthesis_input, voice=voice, audio_config=audio_config
                 )
@@ -180,10 +196,16 @@ def convert_text_to_audio(text: str) -> str:
                 print(f"--- [LOG] Successfully synthesized chunk {i+1}. ---")
             except Exception as e:
                 print(f"!!! [ERROR] Failed to synthesize chunk {i+1}: {e}")
+                print(f"--- [DEBUG] Failing chunk content: {chunk[:200]}...") # Log the failing chunk
                 raise
 
         print("--- [LOG] Concatenating audio chunks. ---")
-        combined_audio = sum(audio_segments)
+        if not audio_segments:
+            raise RuntimeError("No audio segments were generated.")
+        
+        combined_audio = audio_segments[0]
+        for segment in audio_segments[1:]:
+            combined_audio += segment
 
         # Save the combined audio to a temporary file
         temp_file_path = "/tmp/output.mp3"
