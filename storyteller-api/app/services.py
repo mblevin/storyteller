@@ -103,7 +103,8 @@ def generate_story_text(prompt: str) -> str:
             )
             print(f"--- [LOG] Received response from Gemini for story section {i+1}. ---")
             
-            section_text = response.text
+            section_data = json.loads(response.text)
+            section_text = section_data.get("story_section_text", "")
             full_story += section_text + "\n\n"
             print(f"--- [LOG] Successfully generated and appended section {i+1}. ---")
 
