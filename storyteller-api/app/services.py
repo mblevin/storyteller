@@ -170,13 +170,17 @@ def convert_text_to_audio(text: str) -> str:
         print(f"--- [LOG] Text split into {len(byte_chunks)} chunks. ---")
 
         for i, chunk in enumerate(byte_chunks):
-            print(f"--- [LOG] Synthesizing chunk {i+1}/{len(byte_chunks)}. ---")
-            synthesis_input = texttospeech.SynthesisInput(text=chunk.decode('utf-8'))
-            response = client.synthesize_speech(
-                input=synthesis_input, voice=voice, audio_config=audio_config
-            )
-            audio_segments.append(AudioSegment.from_mp3(io.BytesIO(response.audio_content)))
-            print(f"--- [LOG] Successfully synthesized chunk {i+1}. ---")
+            try:
+                print(f"--- [LOG] Synthesizing chunk {i+1}/{len(byte_chunks)}. ---")
+                synthesis_input = texttospeech.SynthesisInput(text=chunk.decode('utf-8'))
+                response = client.synthesize_speech(
+                    input=synthesis_input, voice=voice, audio_config=audio_config
+                )
+                audio_segments.append(AudioSegment.from_mp3(io.BytesIO(response.audio_content)))
+                print(f"--- [LOG] Successfully synthesized chunk {i+1}. ---")
+            except Exception as e:
+                print(f"!!! [ERROR] Failed to synthesize chunk {i+1}: {e}")
+                raise
 
         print("--- [LOG] Concatenating audio chunks. ---")
         combined_audio = sum(audio_segments)
