@@ -19,5 +19,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application's code into the container
 COPY . .
 
+# Make port 10000 available to the world outside this container
+EXPOSE 10000
+
+# Environment variable for the GCP Project ID
+ENV GCP_PROJECT_ID=""
+
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
