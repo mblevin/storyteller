@@ -29,7 +29,6 @@ async def create_story_task(
     new_story = crud.create_story_task(db=db, prompt=request.prompt)
     background_tasks.add_task(
         services.generate_story_and_audio,
-        db=db,
         story_id=new_story.id,
         prompt=request.prompt
     )

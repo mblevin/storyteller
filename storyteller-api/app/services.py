@@ -4,18 +4,19 @@ import json
 import random
 from sqlalchemy.orm import Session
 from google.cloud import storage
-from . import models, crud
+from . import models, crud, database
 import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 GCS_BUCKET_NAME = "storyteller-audio-bucket-mblevin"
 
-def generate_story_and_audio(db: Session, story_id: int, prompt: str):
+def generate_story_and_audio(story_id: int, prompt: str):
     """
     The background task that generates the story, converts it to audio,
     and updates the database.
     """
+    db = database.SessionLocal()
     try:
         crud.update_story_status(db, story_id, "generating_story")
         story_text = generate_story_text(prompt)
@@ -28,6 +29,8 @@ def generate_story_and_audio(db: Session, story_id: int, prompt: str):
     except Exception as e:
         print(f"!!! [ERROR] Background task failed for story {story_id}: {e}")
         crud.update_story_status(db, story_id, "failed")
+    finally:
+        db.close()
 
 def generate_story_text(prompt: str) -> str:
     print("--- [LOG] Starting story generation process. ---")
