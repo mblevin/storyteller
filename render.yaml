@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     # The build command installs dependencies.
-    buildCommand: "pip install -r storyteller-api/requirements.txt"
+    buildCommand: "apt list --installed && pip install -r storyteller-api/requirements.txt"
     # The start command changes to the correct directory before starting the server.
     startCommand: "cd storyteller-api && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
