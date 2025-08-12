@@ -138,7 +138,7 @@ def convert_text_to_audio(text: str) -> str:
         print("--- [LOG] TTS client created successfully. ---")
 
         voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US", name="en-US-Wavenet-F"
+            language_code="en-US", name="en-US-Chirp3-HD-Achernar"
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3
