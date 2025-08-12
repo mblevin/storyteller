@@ -6,3 +6,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.5" # Using a specific, stable Python version
+      - key: GCP_PROJECT_ID
+        value: "internal-api-usage-alternate"
