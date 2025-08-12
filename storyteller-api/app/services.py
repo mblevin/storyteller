@@ -143,7 +143,7 @@ def convert_text_to_audio(text: str) -> str:
 
         print("--- [LOG] Loading GCP credentials from path. ---")
         credentials = service_account.Credentials.from_service_account_file(gcp_credentials_path)
-        client = texttospeech.TextToSpeechClient(credentials=credentials)
+        client = texttospeech.TextToSpeechClient(credentials=credentials, client_options={"api_endpoint": "texttospeech.googleapis.com", "timeout": 120})
         print("--- [LOG] TTS client created successfully. ---")
 
         voices = [
