@@ -9,3 +9,4 @@ google-auth
 google-cloud-texttospeech
 google-generativeai
 pydub
+ffmpeg-python
