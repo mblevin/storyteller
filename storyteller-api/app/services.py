@@ -126,14 +126,13 @@ def convert_text_to_audio(text: str) -> str:
         from pydub import AudioSegment
         import io
 
-        gcp_credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        if not gcp_credentials_json:
+        gcp_credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if not gcp_credentials_path:
             print("!!! [ERROR] GOOGLE_APPLICATION_CREDENTIALS environment variable not set. !!!")
             raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
-        
-        print("--- [LOG] Loading GCP credentials. ---")
-        gcp_credentials = json.loads(gcp_credentials_json)
-        credentials = service_account.Credentials.from_service_account_info(gcp_credentials)
+
+        print("--- [LOG] Loading GCP credentials from path. ---")
+        credentials = service_account.Credentials.from_service_account_file(gcp_credentials_path)
         client = texttospeech.TextToSpeechClient(credentials=credentials)
         print("--- [LOG] TTS client created successfully. ---")
 
