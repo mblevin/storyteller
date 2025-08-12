@@ -183,8 +183,7 @@ def convert_text_to_audio(text: str) -> str:
             language_code="en-US", name=random_voice
         )
         audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=0.8
+            audio_encoding=texttospeech.AudioEncoding.MP3
         )
 
         # Split the text into chunks by sentences, respecting the 5000-char limit
