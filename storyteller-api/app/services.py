@@ -16,11 +16,13 @@ def generate_story_text(prompt: str) -> str:
     # 1. Call Gemini 2.5 Pro to generate a story outline from the prompt.
     print("--- [LOG] Generating story outline. ---")
     outline_prompt = f"""
-    Create a 10-point story outline for a 30-minute sleep story about: {prompt}.
+    Create a 15-point story outline for a 30-minute sleep story about: {prompt}.
     The story should be appropriate for a child aged 8-12.
+    The outline should follow a "gradual unwind" structure, starting in a calm and peaceful setting and becoming progressively more relaxing and dreamlike.
+    The outline should include mindfulness elements, such as focusing on the breath and sensory details.
 
     **IMPORTANT:** Format the output as a JSON object with a single key "outline" which is an array of strings.
-    Example: {{"outline": ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"]}}
+    Example: {{"outline": ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5", "Point 6", "Point 7", "Point 8", "Point 9", "Point 10", "Point 11", "Point 12", "Point 13", "Point 14", "Point 15"]}}
     """
     
     model = genai.GenerativeModel('gemini-1.5-flash')
@@ -75,7 +77,13 @@ def generate_story_text(prompt: str) -> str:
                 summary_of_previous_sections = "No summary available."
 
         section_prompt = f"""
-        You are writing a section of a 30-minute sleep story for a child aged 8-12.
+        You are a master storyteller, crafting a section of a 30-minute sleep story for a child aged 8-12. Your writing should be calm, soothing, and poetic.
+
+        **Style Guidelines:**
+        *   **Lush, Descriptive Language:** Use rich, sensory language that appeals to all the senses (sight, sound, smell, touch, taste).
+        *   **Focus on the Present Moment:** Describe the character's experience as if it is happening right now.
+        *   **Avoid Conflict and Tension:** The story should be completely free of conflict, tension, or any startling events. The tone should be one of peace and tranquility.
+        *   **Gradual Unwind:** Each section should become progressively more relaxing and dreamlike.
 
         **Original User Request:** {prompt}
 
