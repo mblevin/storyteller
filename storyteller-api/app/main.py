@@ -15,10 +15,6 @@ def get_db():
 
 @app.on_event("startup")
 def on_startup():
-    # This is a temporary measure to ensure the DB is always fresh on startup.
-    db_path = "./storyteller.db"
-    if os.path.exists(db_path):
-        os.remove(db_path)
     database.init_db()
 
 @app.post("/stories", response_model=models.StoryTaskResponse)

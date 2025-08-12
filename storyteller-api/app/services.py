@@ -149,27 +149,23 @@ def generate_story_text(prompt: str) -> str:
     return full_story
 
 def convert_text_to_audio(text: str) -> str:
-    """Converts text to an audio file using Google TTS and returns a public URL."""
-    print("--- [LOG] Starting Text-to-Speech conversion process. ---")
+    """Converts text to an audio file using the Long Audio Synthesis API."""
+    print("--- [LOG] Starting Long Audio Synthesis process. ---")
     try:
-        print("--- [LOG] Importing base TTS libraries. ---")
-        from google.cloud import texttospeech
+        from google.cloud import texttospeech_v1beta1 as texttospeech
         from google.oauth2 import service_account
-        import io
-        
-        print("--- [LOG] Importing pydub... ---")
-        from pydub import AudioSegment
-        print("--- [LOG] Successfully imported pydub. ---")
+        import uuid
 
         gcp_credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         if not gcp_credentials_path:
-            print("!!! [ERROR] GOOGLE_APPLICATION_CREDENTIALS environment variable not set. !!!")
-            raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
+            raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS not set.")
 
-        print("--- [LOG] Loading GCP credentials from path. ---")
         credentials = service_account.Credentials.from_service_account_file(gcp_credentials_path)
-        client = texttospeech.TextToSpeechClient(credentials=credentials)
-        print("--- [LOG] TTS client created successfully. ---")
+        client = texttospeech.TextToSpeechLongAudioSynthesizeClient(credentials=credentials)
+
+        input_text = texttospeech.SynthesisInput(text=text)
+
+        audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
 
         voices = [
             "en-US-Chirp3-HD-Achernar",
@@ -179,73 +175,47 @@ def convert_text_to_audio(text: str) -> str:
         ]
         random_voice = random.choice(voices)
 
-        voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US", name=random_voice
-        )
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3
-        )
-
-        # Split the text into chunks by sentences, respecting the 5000-char limit
-        print("--- [LOG] Splitting text into sentence-aware chunks for TTS. ---")
-        import re
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        voice = texttospeech.VoiceSelectionParams(language_code="en-US", name=random_voice)
         
-        chunks = []
-        current_chunk = ""
-        for sentence in sentences:
-            if len(current_chunk) + len(sentence) < 4500: # Keep well under the 5000 limit
-                current_chunk += sentence + " "
-            else:
-                chunks.append(current_chunk)
-                current_chunk = sentence + " "
-        chunks.append(current_chunk) # Add the last chunk
+        project_id = os.getenv("GCP_PROJECT_ID")
+        if not project_id:
+            raise RuntimeError("GCP_PROJECT_ID not set.")
 
-        audio_segments = []
-        print(f"--- [LOG] Text split into {len(chunks)} chunks. ---")
-
-        for i, chunk in enumerate(chunks):
-            if not chunk.strip():
-                continue
-            try:
-                print(f"--- [LOG] Synthesizing chunk {i+1}/{len(chunks)}. ---")
-                synthesis_input = texttospeech.SynthesisInput(text=chunk)
-                response = client.synthesize_speech(
-                    input=synthesis_input, voice=voice, audio_config=audio_config
-                )
-                audio_segments.append(AudioSegment.from_mp3(io.BytesIO(response.audio_content)))
-                print(f"--- [LOG] Successfully synthesized chunk {i+1}. ---")
-            except Exception as e:
-                print(f"!!! [ERROR] Failed to synthesize chunk {i+1}: {e}")
-                print(f"--- [DEBUG] Failing chunk content: {chunk[:200]}...") # Log the failing chunk
-                raise
-
-        print("--- [LOG] Concatenating audio chunks. ---")
-        if not audio_segments:
-            raise RuntimeError("No audio segments were generated.")
+        parent = f"projects/{project_id}/locations/us-central1"
         
-        combined_audio = audio_segments[0]
-        for segment in audio_segments[1:]:
-            combined_audio += segment
+        destination_blob_name = f"story-{uuid.uuid4()}.mp3"
+        output_gcs_uri = f"gs://{GCS_BUCKET_NAME}/{destination_blob_name}"
 
-        # Save the combined audio to a temporary file
-        temp_file_path = "/tmp/output.mp3"
-        print(f"--- [LOG] Exporting combined audio to temporary file: {temp_file_path} ---")
-        combined_audio.export(temp_file_path, format="mp3")
-        print("--- [LOG] Successfully exported audio to temporary file. ---")
+        request = texttospeech.SynthesizeLongAudioRequest(
+            parent=parent,
+            input=input_text,
+            audio_config=audio_config,
+            voice=voice,
+            output_gcs_uri=output_gcs_uri,
+        )
+
+        print("--- [LOG] Submitting Long Audio Synthesis request. ---")
+        operation = client.synthesize_long_audio(request=request)
+        
+        print("--- [LOG] Waiting for Long Audio Synthesis operation to complete... ---")
+        result = operation.result(timeout=600)  # 10-minute timeout
+        print("--- [LOG] Long Audio Synthesis operation complete. ---")
+
+        # The public URL needs to be constructed manually
+        public_url = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{destination_blob_name}"
+        
+        # Make the object public
+        storage_client = storage.Client(credentials=credentials)
+        bucket = storage_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(destination_blob_name)
+        blob.make_public()
+        print(f"--- [LOG] Made GCS object public at: {public_url} ---")
+
+        return public_url
 
     except Exception as e:
-        print(f"!!! [ERROR] An error occurred during Text-to-Speech conversion: {e}")
+        print(f"!!! [ERROR] An error occurred during Long Audio Synthesis: {e}")
         raise RuntimeError(f"TTS Error: {e}")
-
-    # Upload the file to GCS and get the public URL
-    import uuid
-    destination_blob_name = f"story-{uuid.uuid4()}.mp3"
-    print(f"--- [LOG] Uploading audio file to GCS as '{destination_blob_name}'. ---")
-    public_url = upload_to_gcs(temp_file_path, destination_blob_name)
-    
-    print(f"--- [LOG] Successfully generated audio. Public URL: {public_url} ---")
-    return public_url
 
 def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
     """Uploads a file to the GCS bucket and makes it public."""
