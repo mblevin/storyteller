@@ -151,6 +151,12 @@ def generate_story_text(prompt: str) -> str:
 def convert_text_to_audio(text: str) -> str:
     """Converts text to an audio file using the Long Audio Synthesis API."""
     print("--- [LOG] Starting Long Audio Synthesis process. ---")
+
+    project_id = os.getenv("GCP_PROJECT_ID")
+    print(f"--- [LOG] GCP_PROJECT_ID: {project_id} ---")
+    if not project_id:
+        raise RuntimeError("GCP_PROJECT_ID environment variable not set.")
+
     try:
         from google.cloud import texttospeech_v1beta1 as texttospeech
         from google.oauth2 import service_account
@@ -165,7 +171,7 @@ def convert_text_to_audio(text: str) -> str:
 
         input_text = texttospeech.SynthesisInput(text=text)
 
-        audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
+        audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.LINEAR16)
 
         voices = [
             "en-US-Chirp3-HD-Achernar",
@@ -177,13 +183,9 @@ def convert_text_to_audio(text: str) -> str:
 
         voice = texttospeech.VoiceSelectionParams(language_code="en-US", name=random_voice)
         
-        project_id = os.getenv("GCP_PROJECT_ID")
-        if not project_id:
-            raise RuntimeError("GCP_PROJECT_ID not set.")
-
         parent = f"projects/{project_id}/locations/us-central1"
         
-        destination_blob_name = f"story-{uuid.uuid4()}.mp3"
+        destination_blob_name = f"story-{uuid.uuid4()}.wav"
         output_gcs_uri = f"gs://{GCS_BUCKET_NAME}/{destination_blob_name}"
 
         request = texttospeech.SynthesizeLongAudioRequest(
@@ -215,6 +217,7 @@ def convert_text_to_audio(text: str) -> str:
 
     except Exception as e:
         print(f"!!! [ERROR] An error occurred during Long Audio Synthesis: {e}")
+        print(f"!!! [ERROR] Full error: {e!r}")
         raise RuntimeError(f"TTS Error: {e}")
 
 def upload_to_gcs(file_path: str, destination_blob_name: str) -> str:
