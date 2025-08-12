@@ -10,6 +10,24 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 GCS_BUCKET_NAME = "storyteller-audio-bucket-mblevin"
 
+def generate_story_and_audio(db: Session, story_id: int, prompt: str):
+    """
+    The background task that generates the story, converts it to audio,
+    and updates the database.
+    """
+    try:
+        crud.update_story_status(db, story_id, "generating_story")
+        story_text = generate_story_text(prompt)
+        
+        crud.update_story_status(db, story_id, "generating_audio")
+        audio_url = convert_text_to_audio(story_text)
+        
+        crud.complete_story(db, story_id, story_text, audio_url)
+        
+    except Exception as e:
+        print(f"!!! [ERROR] Background task failed for story {story_id}: {e}")
+        crud.update_story_status(db, story_id, "failed")
+
 def generate_story_text(prompt: str) -> str:
     print("--- [LOG] Starting story generation process. ---")
     

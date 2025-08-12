@@ -16,24 +16,36 @@ def get_db():
 def on_startup():
     database.init_db()
 
-@app.post("/stories", response_model=models.StoryResponse)
-def create_story(request: models.StoryRequest, db: Session = Depends(get_db)):
+@app.post("/stories", response_model=models.StoryTaskResponse)
+async def create_story_task(
+    request: models.StoryRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     """
-    Accepts a text prompt, generates a story, converts it to audio,
-    and returns the URL to the audio file.
+    Accepts a prompt and starts a background task to generate the story.
+    Returns a task ID to check for status.
     """
-    try:
-        story_text = services.generate_story_text(request.prompt)
-        audio_url = services.convert_text_to_audio(story_text)
-        
-        crud.create_story(
-            db=db,
-            prompt=request.prompt,
-            story_text=story_text,
-            audio_url=audio_url
-        )
-        
-        return models.StoryResponse(story_text=story_text, audio_url=audio_url)
-    except Exception as e:
-        # Basic error handling
-        raise HTTPException(status_code=500, detail=str(e))
+    new_story = crud.create_story_task(db=db, prompt=request.prompt)
+    background_tasks.add_task(
+        services.generate_story_and_audio,
+        db=db,
+        story_id=new_story.id,
+        prompt=request.prompt
+    )
+    return {"task_id": new_story.id, "status": "pending"}
+
+@app.get("/stories/{story_id}", response_model=models.StoryStatusResponse)
+def get_story_status(story_id: int, db: Session = Depends(get_db)):
+    """
+    Checks the status of a story generation task.
+    """
+    story = crud.get_story(db=db, story_id=story_id)
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    return {
+        "task_id": story.id,
+        "status": story.status,
+        "audio_url": story.audio_url,
+        "story_text": story.story_text
+    }
