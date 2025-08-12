@@ -106,7 +106,7 @@ def generate_story_text(prompt: str) -> str:
             
             section_data = json.loads(response.text)
             section_text = section_data.get("story_section_text", "")
-            full_story += section_text + "\n\n"
+            full_story += section_text + "\n\n[pause long]\n\n"
             print(f"--- [LOG] Successfully generated and appended section {i+1}. ---")
 
         except Exception as e:
@@ -150,7 +150,8 @@ def convert_text_to_audio(text: str) -> str:
             language_code="en-US", name=random_voice
         )
         audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            speaking_rate=0.8
         )
 
         # Split the text into chunks of 4500 bytes
